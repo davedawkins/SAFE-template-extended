@@ -5,10 +5,16 @@ open Fable.Remoting.Client
 open Shared
 open Browser
 
+type FilterOptions = 
+    | All
+    | Active
+    | Complete
+
 type Model =
     { 
       Todos: Todo list
       Input: string 
+      Filter: FilterOptions
     }
 
 type Msg =
@@ -22,6 +28,7 @@ type Msg =
     | DeleteTodo of Todo
     | DeletedTodo of TodoKey
     | ClearCompleted
+    | SetFilter of FilterOptions
 
 let todosApi =
     Remoting.createApi()
@@ -31,7 +38,9 @@ let todosApi =
 let init(): Model * Cmd<Msg> =
     let model =
         { Todos = []
-          Input = "" }
+          Input = "" 
+          Filter = All
+          }
     let cmd = Cmd.OfAsync.perform todosApi.getTodos () GotTodos
     model, cmd
 
@@ -81,8 +90,12 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
     | DeletedTodo key ->
         { model with Todos = model.Todos |> List.filter (fun x -> x.Id <> key) }, Cmd.none
 
+    | SetFilter f ->
+        { model with Filter = f }, Cmd.none
+
 open Fable.React
 open Fable.React.Props
+open Fable.Import
 open Fulma
 
 let navBrand =
@@ -125,19 +138,59 @@ let todoInput model dispatch =
         //]
     ]
 
-let todoOptionBar model dispatch =
-    Field.div [ Field.IsGrouped ] [
-        sprintf "%d items left" (numItemsLeft model) |> str
-        str "All"
-        str "Active"
-        str "Completed"
-        a [ Href "#"; OnClick (fun e -> e.preventDefault(); dispatch ClearCompleted ) ] [str  "Clear completed" ]
+let filterButton model dispatch label (op : FilterOptions) =
+    Radio.radio [ 
+        Props [ 
+            Checked (model.Filter = op)
+            OnChange (fun _ -> SetFilter op |> dispatch) 
+        ] 
+    ] [ 
+        Radio.input [ 
+            Radio.Input.Name "Filters" 
+            Radio.Input.Props [ Checked (op = model.Filter) ]
+        ]
+        str label
+    ]
+
+let Centered (items : seq<ReactElement>) =
+    div [ Style [ 
+                Display DisplayOptions.Flex
+                JustifyContent "center"
+            ]
+    ] items 
+
+let todoOptionBar model (dispatch: Msg -> unit) =
+    let plural label n = if n = 1 then label else label + "s"
+    let n = numItemsLeft model
+
+    Columns.columns [ ] [
+        Column.column [ Column.Width ( Screen.All, Column.Is3 ); Column.CustomClass "has-text-left" ] [
+            sprintf "%d %s left" n (plural "item" n) |> str
+        ]
+        Column.column [ 
+            Column.Width ( Screen.All, Column.Is6 )
+        ] [
+            Centered [
+                filterButton model dispatch  " All" FilterOptions.All
+                filterButton model dispatch  " Active" FilterOptions.Active
+                filterButton model dispatch  " Complete" FilterOptions.Complete
+            ]
+        ]
+        Column.column [ Column.Width ( Screen.All, Column.Is3 ); Column.CustomClass "has-text-right" ] [
+            a [ Href "#"; OnClick (fun e -> e.preventDefault(); dispatch ClearCompleted ) ] [str  "Clear completed" ]
+        ]
     ]
 
 
 let todoList model dispatch =
     Content.content [ ] [
-        for todo in model.Todos ->
+        let vis (todo : Todo) = 
+            match model.Filter with
+            | FilterOptions.All -> true
+            | Active -> not todo.Completed
+            | Complete -> todo.Completed
+
+        for todo in model.Todos |> List.filter vis ->
             let completeClass = if todo.Completed then [ "completed"] else []
             let itemClasses = [ "todo-item" ] @ completeClass
 
@@ -152,8 +205,8 @@ let todoList model dispatch =
                                 OnClick (fun _ -> (todo, not todo.Completed) |> SetCompleted |> dispatch) 
                             ]
                         ] 
-                        str todo.Description
                     ]
+                    str todo.Description
                 ]
                 Column.column [] [
                     button [ 
