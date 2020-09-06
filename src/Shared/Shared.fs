@@ -2,10 +2,14 @@ namespace Shared
 
 open System
 
+type TodoKey = Guid
+
 [<CLIMutable>]
 type Todo =
-    { Id : Guid
-      Description : string }
+    { Id : TodoKey
+      Description : string 
+      Completed : bool
+      }
 
 module Todo =
     let isValid (description: string) =
@@ -13,7 +17,9 @@ module Todo =
 
     let create (description: string) =
         { Id = Guid.NewGuid()
-          Description = description }
+          Description = description
+          Completed = false
+          }
 
 module Route =
     let builder typeName methodName =
@@ -21,4 +27,8 @@ module Route =
 
 type ITodosApi =
     { getTodos : unit -> Async<Todo list>
-      addTodo : Todo -> Async<Todo> }
+      addTodo : Todo -> Async<Todo> 
+      updateTodo : Todo -> Async<Todo>
+      clearCompletedTodos : unit -> Async<Todo list>
+      deleteTodo : Todo -> Async<TodoKey>
+      }

@@ -92,7 +92,7 @@ NUGET
       FSharp.Core (>= 4.3.4)
       Microsoft.IO.RecyclableMemoryStream (>= 1.2.2)
     FSharp.Core (4.7.2)
-    Fulma (2.7)
+    Fulma (2.10)
       Fable.Core (>= 3.0)
       Fable.React (>= 5.1)
     Giraffe (4.0.1)

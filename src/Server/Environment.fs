@@ -18,4 +18,4 @@ let dataFolder =
     folder
 
 /// The path of database file
-let databaseFilePath = dataFolder </> "Todo.db"
+let databaseFilePath = dataFolder </> "TodoX.db"
