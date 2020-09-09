@@ -1,101 +1,9 @@
-module Index
+module TodoApp.View
 
-open Elmish
-open Fable.Remoting.Client
 open Shared
-open Browser
-
-type FilterOptions = 
-    | All
-    | Active
-    | Complete
-
-type Model =
-    { 
-      Todos: Todo list
-      Input: string 
-      Filter: FilterOptions
-    }
-
-type Msg =
-    | GotTodos of Todo list
-    | SetInput of string
-    | SetCompleted of Todo * bool
-    | AddTodo
-    | AddedTodo of Todo
-    | UpdateTodo of Todo
-    | UpdatedTodo of Todo
-    | DeleteTodo of Todo
-    | DeletedTodo of TodoKey
-    | ClearCompleted
-    | SetFilter of FilterOptions
-
-let todosApi =
-    Remoting.createApi()
-    |> Remoting.withRouteBuilder Route.builder
-    |> Remoting.buildProxy<ITodosApi>
-
-let init(): Model * Cmd<Msg> =
-    let model =
-        { Todos = []
-          Input = "" 
-          Filter = All
-          }
-    let cmd = Cmd.OfAsync.perform todosApi.getTodos () GotTodos
-    model, cmd
-
-let updateTodo todos todo =
-    List.map (fun t -> if todo.Id = t.Id then todo else t) todos
-
-let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
-    match msg with
-    // Note we don't update the model here. We will only allow a message
-    // from the server to update the model
-    | SetCompleted (todo,completed) ->
-        model, Cmd.ofMsg (UpdateTodo { todo with Completed = completed })
-
-    | GotTodos todos ->
-        { model with Todos = todos }, Cmd.none
-
-    | SetInput value ->
-        { model with Input = value }, Cmd.none
-
-    // Exit point to server for a Todo update. Again, model is unchange until
-    // we get a response
-    | UpdateTodo todo ->
-        let cmd = Cmd.OfAsync.perform todosApi.updateTodo todo UpdatedTodo
-        model, cmd
-
-    // Finally, we can safely update our model - the server is supplying
-    // state (and we assume the server has persisted that state successfully)
-    | UpdatedTodo todo ->
-        { model with Todos = updateTodo model.Todos todo  }, Cmd.none
- 
-    // Todo not added to model here, until server responds 
-    | AddTodo ->
-        let todo = Todo.create model.Input
-        let cmd = Cmd.OfAsync.perform todosApi.addTodo todo AddedTodo
-        { model with Input = "" }, cmd
-
-    // Now we can add the todo
-    | AddedTodo todo ->
-        { model with Todos = model.Todos @ [ todo ] }, Cmd.none
-
-    | ClearCompleted -> 
-        model, Cmd.OfAsync.perform todosApi.clearCompletedTodos () GotTodos
-
-    | DeleteTodo todo ->
-        model, Cmd.OfAsync.perform todosApi.deleteTodo todo DeletedTodo
- 
-    | DeletedTodo key ->
-        { model with Todos = model.Todos |> List.filter (fun x -> x.Id <> key) }, Cmd.none
-
-    | SetFilter f ->
-        { model with Filter = f }, Cmd.none
-
+open TodoApp.Types
 open Fable.React
 open Fable.React.Props
-open Fable.Import
 open Fulma
 
 let navBrand =
@@ -114,8 +22,14 @@ let navBrand =
 let numItemsLeft (model:Model) =
     model.Todos |> List.filter (fun t -> not t.Completed) |> List.length
 
+// Experiment to see if I can pass handlers to OnReturn and OnBlur without
+// a lambda, just partial application / currying. Almost works, but I can't 
+// type OnReturn as taking a function expecting a KeyboardEvent only a generic Event
+
+let skipB a b = a
+
 let OnReturn f =
-    DOMAttr.OnKeyUp (fun e -> if e.keyCode = 13.0 then e.preventDefault(); f())
+    DOMAttr.OnKeyUp (fun e -> if e.keyCode = 13.0 then e.preventDefault(); f(e))
 
 let todoInput model dispatch =
     Field.div [ Field.IsGrouped ] [
@@ -124,18 +38,23 @@ let todoInput model dispatch =
               Input.Value model.Input
               Input.Placeholder "What needs to be done?"
               Input.OnChange (fun x -> SetInput x.Value |> dispatch)
-              Input.Props [ OnReturn (fun _ -> dispatch AddTodo) ]
+              Input.Props [ dispatch AddTodo |> skipB |> OnReturn ]
               ]
         ]
-        //Control.p [ ] [
-        //    Button.a [
-        //        Button.Color IsPrimary
-        //        Button.Disabled (Todo.isValid model.Input |> not)
-        //        Button.OnClick (fun _ -> dispatch AddTodo)
-        //    ] [
-        //        str "Add"
-        //    ]
-        //]
+    ]
+
+let editInput (editState : EditModel) dispatch =
+    Field.div [ Field.IsGrouped ] [
+        Control.p [ Control.IsExpanded ] [
+            Input.text [
+              Input.Value editState.Input
+              Input.OnChange (fun x -> SetEditInput x.Value |> dispatch)
+              Input.Props [ 
+                  dispatch Commit |> skipB |> OnReturn
+                  dispatch Commit |> skipB |> OnBlur
+                  AutoFocus true ]
+              ]
+        ]
     ]
 
 let filterButton model dispatch label (op : FilterOptions) =
@@ -195,7 +114,7 @@ let todoList model dispatch =
             let itemClasses = [ "todo-item" ] @ completeClass
 
             Columns.columns  [ Columns.CustomClass (String.concat " " itemClasses) ] [
-                Column.column [Column.Width ( Screen.All, Column.Is11 )] [
+                Column.column [Column.Width ( Screen.All, Column.Is1 )] [
                     Checkbox.checkbox [ ] [ 
                         Checkbox.input [ 
                             Modifiers [ Modifier.Spacing (Spacing.MarginRight, Spacing.Is2) ]; 
@@ -206,7 +125,13 @@ let todoList model dispatch =
                             ]
                         ] 
                     ]
-                    str todo.Description
+                ]
+                Column.column [Column.Width ( Screen.All, Column.Is10 )] [
+                    match model.Editing with
+                    | Some edit when edit.Todo.Id = todo.Id ->
+                        editInput edit (EditMessage >> dispatch)
+                    | _ ->
+                        span [ OnDoubleClick (fun _ -> StartEdit todo |> dispatch) ] [ str todo.Description ]
                 ]
                 Column.column [] [
                     button [ 
