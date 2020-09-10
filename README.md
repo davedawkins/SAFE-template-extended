@@ -2,6 +2,8 @@
 
 This template was created with `dotnet new safe`, and then I've replaced the in-memory storage with `LiteDB` using [LiteDB.FSharp](https://github.com/Zaid-Ajaj/LiteDB.FSharp).
 
+[Live Demo](https://davedawkins.github.io/SAFE-template-extended/)
+
 ## Main Changes
 
 - Add `[<CliMutable>]` to `type Todo`. This attribute effectively makes the type serializable (adds default ctor, getters and setters).

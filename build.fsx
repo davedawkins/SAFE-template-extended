@@ -80,6 +80,9 @@ Target.create "RunTests" (fun _ ->
     |> ignore
 )
 
+Target.create "PublishApp" <| fun _ ->
+    npm "run publish" "."
+
 open Fake.Core.TargetOperators
 
 "Clean"

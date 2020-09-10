@@ -13,7 +13,7 @@ let navBrand =
             Navbar.Item.IsActive true
         ] [
             img [
-                Src "/favicon.png"
+                Src "favicon.png"
                 Alt "Logo"
             ]
         ]
@@ -38,7 +38,8 @@ let todoInput model dispatch =
               Input.Value model.Input
               Input.Placeholder "What needs to be done?"
               Input.OnChange (fun x -> SetInput x.Value |> dispatch)
-              Input.Props [ dispatch AddTodo |> skipB |> OnReturn ]
+              //Input.Props [ dispatch AddTodo |> skipB |> OnReturn ]
+              Input.Props [ OnReturn (fun _ -> dispatch AddTodo) ]
               ]
         ]
     ]
@@ -50,8 +51,8 @@ let editInput (editState : EditModel) dispatch =
               Input.Value editState.Input
               Input.OnChange (fun x -> SetEditInput x.Value |> dispatch)
               Input.Props [ 
-                  dispatch Commit |> skipB |> OnReturn
-                  dispatch Commit |> skipB |> OnBlur
+                  OnReturn (fun _ -> dispatch Commit)
+                  OnBlur (fun _ -> dispatch Commit )
                   AutoFocus true ]
               ]
         ]

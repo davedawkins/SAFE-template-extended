@@ -6,17 +6,20 @@ open Elmish.React
 #if DEBUG
 open Elmish.Debug
 open Elmish.HMR
+#endif
 open Fable.Remoting.Client
 open Shared
-#endif
 
-let useMemory = false
+let useMemory = true
 
 // TODO: No really, this function still todo
-let inMemoryTodosApi = 
-    let mutable todos : Todo list = []
+let inMemoryTodosApi() = 
+    let mutable todos : Todo list = [
+        Todo.create "Build an app"
+        Todo.create "Ship it!"
+    ]
     {
-        getTodos = fun () -> async { return todos } // : unit -> Async<Todo list>
+        getTodos = fun () -> async { return List.ofSeq <| seq { yield! todos } } // : unit -> Async<Todo list>
 
         addTodo  = fun todo -> async { 
             todos <- todo :: todos
@@ -39,13 +42,14 @@ let inMemoryTodosApi =
         } // : Todo -> Async<TodoKey>
     }
 
-let remoteTodosApi =
+let remoteTodosApi() =
     Remoting.createApi()
     |> Remoting.withRouteBuilder Route.builder
     |> Remoting.buildProxy<ITodosApi>
 
 let todosApi =
-    if useMemory then remoteTodosApi else inMemoryTodosApi
+    System.Console.WriteLine("Creating todosApi")
+    if not useMemory then remoteTodosApi() else inMemoryTodosApi()
 
 Program.mkProgram (fun() -> TodoApp.State.init todosApi) (TodoApp.State.update todosApi) TodoApp.View.view
 #if DEBUG
