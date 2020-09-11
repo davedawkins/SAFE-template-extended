@@ -12,9 +12,9 @@ open Fable.Remoting.Client
 open Shared
 
 // I need a way to set this true only when building for gh-pages
-let useMemory = true
+#if FOR_GH_PAGES
 
-let inMemoryTodosApi() = 
+let todosApi = 
     let mutable todos : Todo list = Todo.initial
     {
         getTodos = fun () -> async { return List.ofSeq <| seq { yield! todos } } // : unit -> Async<Todo list>
@@ -40,13 +40,14 @@ let inMemoryTodosApi() =
         }
     }
 
-let remoteTodosApi() =
+#else
+
+let todosApi =
     Remoting.createApi()
     |> Remoting.withRouteBuilder Route.builder
     |> Remoting.buildProxy<ITodosApi>
 
-let todosApi =
-    if not useMemory then remoteTodosApi() else inMemoryTodosApi()
+#endif
 
 Program.mkProgram (fun() -> TodoApp.State.init todosApi) (TodoApp.State.update todosApi) TodoApp.View.view
 #if DEBUG
