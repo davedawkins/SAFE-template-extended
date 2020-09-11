@@ -21,6 +21,13 @@ module Todo =
           Completed = false
           }
 
+    let initial = [
+            create "Create new SAFE project"
+            create "Write your app"
+            create "Ship it !!!"
+        ]
+
+
 module Route =
     let builder typeName methodName =
         sprintf "/api/%s/%s" typeName methodName
@@ -32,3 +39,4 @@ type ITodosApi =
       clearCompletedTodos : unit -> Async<Todo list>
       deleteTodo : Todo -> Async<TodoKey>
       }
+

@@ -13,6 +13,8 @@ let init (api:ITodosApi): Model * Cmd<Msg> =
     let cmd = Cmd.OfAsync.perform api.getTodos () GotTodos
     model, cmd
 
+// Linear searching! There are better ways of doing this in F# I'm sure.
+// In C# I'd use a Dictionary<Guid,Todo>. That's still a mutable mindset though.
 let replaceTodo todos todo =
     List.map (fun t -> if todo.Id = t.Id then todo else t) todos
 
@@ -23,19 +25,23 @@ let updateEdit (msg : EditMsg) (model : EditModel option) : EditModel option * C
         match msg with
         | SetEditInput s ->
             Some { edit with Input = s }, Cmd.none, Continue
-        | Commit -> // Keep compiler happy but should not happen
+        | Commit -> // Nothing to do at this level, signal parent to finish
             None, Cmd.none, Finish edit
 
 let update (api : ITodosApi) (msg: Msg) (model: Model): Model * Cmd<Msg> =
     match msg with
 
-    | EditMessage em -> // Keep compiler happy, but should not happen
+    | EditMessage em ->
         let (editState, cmd, status) = updateEdit em model.Editing
         match status with
         | Continue ->
             { model with Editing = editState }, Cmd.map EditMessage cmd
         | Finish edit ->
-            { model with Editing = editState }, Cmd.batch [ Cmd.map EditMessage cmd;  Cmd.ofMsg <| UpdateTodo { edit.Todo with Description = edit.Input } ]
+            { model with Editing = editState },
+            Cmd.batch [ 
+                Cmd.map EditMessage cmd
+                Cmd.ofMsg <| UpdateTodo { edit.Todo with Description = edit.Input } 
+            ]
 
     | StartEdit (todo) ->
         { model with Editing = Some { Todo = todo; Input = todo.Description } }, Cmd.none

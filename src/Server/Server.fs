@@ -20,9 +20,8 @@ type Storage (db : LiteDatabase) as this =
 
     do
         if not (db.CollectionExists collection) then
-            this.AddTodo(Todo.create "Create new SAFE project") |> ignore
-            this.AddTodo(Todo.create "Write your app") |> ignore
-            this.AddTodo(Todo.create "Ship it !!!") |> ignore
+            for todo in Todo.initial do
+                this.AddTodo(todo) |> ignore
 
     member __.ClearCompleted() =
         let n = todos.Delete ( fun x -> x.Completed )

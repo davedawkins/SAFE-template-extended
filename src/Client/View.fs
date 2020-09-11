@@ -22,12 +22,6 @@ let navBrand =
 let numItemsLeft (model:Model) =
     model.Todos |> List.filter (fun t -> not t.Completed) |> List.length
 
-// Experiment to see if I can pass handlers to OnReturn and OnBlur without
-// a lambda, just partial application / currying. Almost works, but I can't 
-// type OnReturn as taking a function expecting a KeyboardEvent only a generic Event
-
-let skipB a b = a
-
 let OnReturn f =
     DOMAttr.OnKeyUp (fun e -> if e.keyCode = 13.0 then e.preventDefault(); f(e))
 

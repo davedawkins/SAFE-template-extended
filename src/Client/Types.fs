@@ -7,9 +7,10 @@ type FilterOptions =
     | Active
     | Complete
 
+// Editing an existing todo
 type EditMsg =
     | SetEditInput of string
-    | Commit  // Who should handle this?
+    | Commit
 
 // State for editing a todo
 type EditModel =
