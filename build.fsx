@@ -47,6 +47,10 @@ Target.create "Bundle" (fun _ ->
     npm "run build" "."
 )
 
+Target.create "BundleForGHPages" (fun _ ->
+    npm "run build-gh-pages" "."
+)
+
 Target.create "Azure" (fun _ ->
     let web = webApp {
         name "safe_litedb"
@@ -97,5 +101,10 @@ open Fake.Core.TargetOperators
 "Clean"
     ==> "InstallClient"
     ==> "RunTests"
+
+"Clean"
+    ==> "InstallClient"
+    ==> "BundleForGHPages"
+    ==> "PublishApp"
 
 Target.runOrDefaultWithArguments "Bundle"

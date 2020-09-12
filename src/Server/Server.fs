@@ -24,8 +24,7 @@ type Storage (db : LiteDatabase) as this =
                 this.AddTodo(todo) |> ignore
 
     member __.ClearCompleted() =
-        let n = todos.Delete ( fun x -> x.Completed )
-        System.Console.WriteLine("Deleted {0} items", n)
+        todos.Delete ( fun x -> x.Completed ) |> ignore
 
     member __.GetTodos () =
         todos.FindAll() |> List.ofSeq
@@ -60,7 +59,6 @@ let todosApi (storage : Storage)=
         } 
       updateTodo =
         fun todo -> async {
-            System.Console.WriteLine("Server: updateToDo ")
             match storage.UpdateTodo todo with
             | Ok () -> return todo
             | Error e -> return failwith e

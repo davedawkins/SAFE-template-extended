@@ -12,7 +12,7 @@ open Fable.Remoting.Client
 open Shared
 
 // I need a way to set this true only when building for gh-pages
-#if FOR_GH_PAGES
+#if GHPAGES
 
 let todosApi = 
     let mutable todos : Todo list = Todo.initial

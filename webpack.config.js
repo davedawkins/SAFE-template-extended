@@ -10,7 +10,8 @@ var path = require('path');
 var webpack = require('webpack');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
-var MiniCssExtractPlugin = require('mini-css-extract-plugin')
+var MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const { Console } = require('console');
 
 var CONFIG = {
     // The tags to include the generated JS and CSS will be automatically injected in the HTML template
@@ -49,9 +50,6 @@ var CONFIG = {
     }
 }
 
-// If we're running the webpack-dev-server, assume we're in development mode
-var isProduction = !process.argv.find(v => v.indexOf('webpack-dev-server') !== -1);
-console.log('Bundling for ' + (isProduction ? 'production' : 'development') + '...');
 
 // The HtmlWebpackPlugin allows us to use a template for the index.html page
 // and automatically injects <script> or <link> tags for generated bundles.
@@ -62,7 +60,18 @@ var commonPlugins = [
     })
 ];
 
-module.exports = {
+module.exports = (env) => {
+
+    // check for --env.ghpages=1
+    let isGhPages = typeof(env) !== 'undefined' && env.hasOwnProperty("ghpages");
+    
+    // If we're running the webpack-dev-server, assume we're in development mode
+    var isProduction = !process.argv.find(v => v.indexOf('webpack-dev-server') !== -1);
+
+    console.log('Bundling for ' + (isProduction ? 'production' : 'development') + '...');
+    console.log("ghpages=" + isGhPages);
+
+    return {
     // In development, split the JavaScript and CSS files in order to
     // have a faster HMR support. In production bundle styles together
     // with the code because the MiniCssExtractPlugin will extract the
@@ -130,7 +139,8 @@ module.exports = {
                 use: {
                     loader: 'fable-loader',
                     options: {
-                        babel: CONFIG.babel
+                        babel: CONFIG.babel,
+                        define: isGhPages ? ["GHPAGES"] : []
                     }
                 }
             },
@@ -161,7 +171,7 @@ module.exports = {
             }
         ]
     }
-};
+}; }
 
 function resolve(filePath) {
     return path.isAbsolute(filePath) ? filePath : path.join(__dirname, filePath);
