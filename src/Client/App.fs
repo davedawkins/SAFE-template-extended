@@ -17,7 +17,7 @@ open Shared
 let todosApi = 
     let mutable todos : Todo list = Todo.initial
     {
-        getTodos = fun () -> async { return List.ofSeq <| seq { yield! todos } } // : unit -> Async<Todo list>
+        getTodos = fun () -> async { return todos } // : unit -> Async<Todo list>
 
         addTodo  = fun todo -> async { 
             todos <- todo :: todos
