@@ -6,6 +6,8 @@ nuget Fable.Remoting.Giraffe
 nuget Saturn
 nuget Expecto
 nuget LiteDB.FSharp
+nuget Elmish.Bridge.Giraffe
+nuget Elmish.Bridge.Client
 
 nuget Fable.Core
 nuget Fable.Elmish

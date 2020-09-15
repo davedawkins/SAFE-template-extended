@@ -2,6 +2,7 @@ module App
 
 open Elmish
 open Elmish.React
+open Elmish.Bridge
 
 #if DEBUG
 open Elmish.Debug
@@ -10,6 +11,7 @@ open Elmish.HMR
 
 open Fable.Remoting.Client
 open Shared
+open TodoApp.Types
 
 // I need a way to set this true only when building for gh-pages
 #if GHPAGES
@@ -49,12 +51,11 @@ let todosApi =
 
 #endif
 
-Program.mkProgram (fun() -> TodoApp.State.init todosApi) (TodoApp.State.update todosApi) TodoApp.View.view
+Program.mkProgram (fun _ -> TodoApp.State.init todosApi) (TodoApp.State.update todosApi) TodoApp.View.view
+|> Program.withBridgeConfig (Bridge.endpoint Shared.Remote.endpoint |> Bridge.withMapping Msg.ServerMsg)
 #if DEBUG
 |> Program.withConsoleTrace
-#endif
-|> Program.withReactSynchronous "elmish-app"
-#if DEBUG
 |> Program.withDebugger
 #endif
+|> Program.withReactSynchronous "elmish-app"
 |> Program.run

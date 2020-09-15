@@ -1,5 +1,6 @@
 Fable.Core
 Fable.Elmish
+Elmish.Bridge.Client
 Fable.Elmish.React
 Fable.Elmish.Debugger
 Fable.Elmish.HMR

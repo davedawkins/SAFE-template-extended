@@ -2,6 +2,8 @@ module TodoApp.State
 open Types
 open Elmish
 open Shared
+open Shared.Remote
+open Elmish.Bridge
 
 let init (api:ITodosApi): Model * Cmd<Msg> =
     let model =
@@ -31,6 +33,12 @@ let updateEdit (msg : EditMsg) (model : EditModel option) : EditModel option * C
 let update (api : ITodosApi) (msg: Msg) (model: Model): Model * Cmd<Msg> =
     match msg with
 
+    | ServerMsg msg ->
+        match msg with 
+        | ReloadTodos ->
+            let cmd = Cmd.OfAsync.perform api.getTodos () GotTodos
+            model, cmd
+            
     | EditMessage em ->
         let (editState, cmd, status) = updateEdit em model.Editing
         match status with
@@ -66,7 +74,7 @@ let update (api : ITodosApi) (msg: Msg) (model: Model): Model * Cmd<Msg> =
     // Finally, we can safely update our model - the server is supplying
     // state (and we assume the server has persisted that state successfully)
     | UpdatedTodo todo ->
-        { model with Todos = replaceTodo model.Todos todo  }, Cmd.none
+        { model with Todos = replaceTodo model.Todos todo  }, Cmd.bridgeSend (RemoteClientMsg.TodoAdded)
  
     // Todo not added to model here, until server responds 
     | AddTodo ->
@@ -76,7 +84,7 @@ let update (api : ITodosApi) (msg: Msg) (model: Model): Model * Cmd<Msg> =
 
     // Now we can add the todo
     | AddedTodo todo ->
-        { model with Todos = model.Todos @ [ todo ] }, Cmd.none
+        { model with Todos = model.Todos @ [ todo ] }, Cmd.bridgeSend (RemoteClientMsg.TodoAdded)
 
     | ClearCompleted -> 
         model, Cmd.OfAsync.perform api.clearCompletedTodos () GotTodos
