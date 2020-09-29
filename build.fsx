@@ -66,10 +66,6 @@ Target.create "Azure" (fun _ ->
     |> ignore
 )
 
-Target.create "RunDeploy" (fun _ ->
-    dotnet "Server.dll" deployDir
-)
-
 Target.create "Run" (fun _ ->
     dotnet "build" sharedPath
     [ async { dotnet "watch run" serverPath }
@@ -97,11 +93,6 @@ open Fake.Core.TargetOperators
     ==> "InstallClient"
     ==> "Bundle"
     ==> "Azure"
-
-"Clean"
-    ==> "InstallClient"
-    ==> "Bundle"
-    ==> "RunDeploy"
 
 "Clean"
     ==> "InstallClient"

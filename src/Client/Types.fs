@@ -2,8 +2,6 @@ module TodoApp.Types
 
 open Shared
 
-open Shared.Remote
-
 type FilterOptions = 
     | All
     | Active
@@ -49,5 +47,3 @@ type Msg =
     | SetFilter of FilterOptions
     | StartEdit of Todo
     | EditMessage of EditMsg
-    | ServerMsg of RemoteServerMsg
-

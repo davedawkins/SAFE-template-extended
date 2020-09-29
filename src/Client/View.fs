@@ -23,9 +23,7 @@ let numItemsLeft (model:Model) =
     model.Todos |> List.filter (fun t -> not t.Completed) |> List.length
 
 let OnReturn f =
-    DOMAttr.OnKeyPress (fun e -> 
-        if e.charCode = 13.0 then e.preventDefault(); f(e)
-    )
+    DOMAttr.OnKeyUp (fun e -> if e.keyCode = 13.0 then e.preventDefault(); f(e))
 
 let todoInput model dispatch =
     Field.div [ Field.IsGrouped ] [
@@ -34,6 +32,7 @@ let todoInput model dispatch =
               Input.Value model.Input
               Input.Placeholder "What needs to be done?"
               Input.OnChange (fun x -> SetInput x.Value |> dispatch)
+              //Input.Props [ dispatch AddTodo |> skipB |> OnReturn ]
               Input.Props [ OnReturn (fun _ -> dispatch AddTodo) ]
               ]
         ]
@@ -75,12 +74,12 @@ let Centered (items : seq<ReactElement>) =
     ] items 
 
 let todoOptionBar model (dispatch: Msg -> unit) =
-    let plural n label = sprintf "%d %s%s" n label (if n = 1 then "" else "s")
+    let plural label n = if n = 1 then label else label + "s"
     let n = numItemsLeft model
 
     Columns.columns [ ] [
         Column.column [ Column.Width ( Screen.All, Column.Is3 ); Column.CustomClass "has-text-left" ] [
-            plural n "item" |> sprintf "%s left" |> str
+            sprintf "%d %s left" n (plural "item" n) |> str
         ]
         Column.column [ 
             Column.Width ( Screen.All, Column.Is6 )

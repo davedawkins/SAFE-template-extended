@@ -40,9 +40,3 @@ type ITodosApi =
       deleteTodo : Todo -> Async<TodoKey>
       }
 
-module Remote =
-
-    let endpoint = "/shared"
-
-    type RemoteServerMsg = ReloadTodos
-    type RemoteClientMsg = TodoAdded
